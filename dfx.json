@@ -1,12 +1,12 @@
 {
   "canisters": {
-    "elm": {
-      "main": "src/elm/main.mo",
+    "backend": {
+      "main": "src/backend/main.mo",
       "type": "motoko"
     },
     "elm_assets": {
       "dependencies": [
-        "elm"
+        "backend"
       ],
       "frontend": {
         "entrypoint": "src/elm_assets/public/index.js"

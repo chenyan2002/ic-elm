@@ -57,12 +57,18 @@ function generateWebpackConfigForCanister(name, info) {
     // webpack configuration. For example, if you are using React
     // modules and CSS as described in the "Adding a stylesheet"
     // tutorial, uncomment the following lines:
-    // module: {
-    //  rules: [
-    //    { test: /\.(js|ts)x?$/, loader: "ts-loader" },
-    //    { test: /\.css$/, use: ['style-loader','css-loader'] }
-    //  ]
-    // },
+    module: {
+      rules: [
+        { test: /\.elm$/, exclude: [/elm-stuff/, /node_modules/],
+          use: {
+            loader: "elm-webpack-loader",
+            options: { optimize: true }
+          }
+        },
+        { test: /\.css$/, use: ['style-loader','css-loader'] }
+      ],
+      noParse: /\.elm$/,
+    },
     plugins: [],
   };
 }

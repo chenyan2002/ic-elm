@@ -1,5 +1,12 @@
-import elm from 'ic:canisters/elm';
+import backend from 'ic:canisters/backend';
+import { Elm } from './Main.elm';
 
-elm.greet(window.prompt("Enter your name:")).then(greeting => {
-  window.alert(greeting);
+const app = Elm.Main.init({
+  node: document.getElementById('app'),
+});
+
+app.ports.sendMessage.subscribe(message => {
+  backend.greet(message).then(res => {
+    app.ports.messageReceiver.send(res);
+  });
 });

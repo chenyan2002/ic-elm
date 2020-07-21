@@ -8,15 +8,18 @@ import Html.Events exposing (..)
 main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
-port sendMessage : String -> Cmd msg
-port messageReceiver : (String -> msg) -> Sub msg
+port sendMessage : (String, String) -> Cmd msg
+port messageReceiver : ((String, String) -> msg) -> Sub msg
+
+subscriptions : Model -> Sub Msg
+subscriptions _ = messageReceiver Recv
 
 type alias Model = { input : String, output : String }
 
 init : () -> (Model, Cmd msg)
 init _ = (Model "" "", Cmd.none)
 
-type Msg = Send | Recv String | Changed String
+type Msg = Send | Recv (String, String) | Changed String
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -24,15 +27,12 @@ update msg model =
     Changed input -> ( { model | input = input }, Cmd.none)
     Send ->
         ( { model | output = "Waiting..." }
-        , sendMessage model.input
+        , sendMessage ("greet", model.input)
         )
-    Recv message ->
-        ( { model | output = message }
+    Recv (method, message) ->
+        ( { model | output = method ++ ": " ++ message }
         , Cmd.none
         )
-
-subscriptions : Model -> Sub Msg
-subscriptions _ = messageReceiver Recv
 
 view : Model -> Html Msg
 view model =

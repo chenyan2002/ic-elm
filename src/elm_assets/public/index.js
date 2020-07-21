@@ -5,8 +5,8 @@ const app = Elm.Main.init({
   node: document.getElementById('app'),
 });
 
-app.ports.sendMessage.subscribe(message => {
-  backend.greet(message).then(res => {
-    app.ports.messageReceiver.send(res);
+app.ports.sendMessage.subscribe(([method, message]) => {
+  backend[method](message).then(res => {
+    app.ports.messageReceiver.send([method, res]);
   });
 });

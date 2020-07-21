@@ -7,7 +7,7 @@
     "build": "webpack"
   },
   "devDependencies": {
-    "@dfinity/agent": "0.5.13.1",
+    "@dfinity/agent": "0.5.14",
     "terser-webpack-plugin": "2.2.2",
     "webpack": "4.41.3",
     "webpack-cli": "3.3.10"

@@ -30,8 +30,8 @@ update msg model =
     Send ->
         ( { model | output = "Waiting..." }
         --, sendMessage ("getCaller", [])
-        , sendMessage ("greet", [E.string model.input])
         --, sendMessage ("fib", [E.int (Maybe.withDefault 0 (String.toInt model.input))])
+        , sendMessage ("greet", [E.string model.input])
         )
     Recv (method, message) ->
         let result = String.join ", " (List.map (\v -> E.encode 0 v) message) in

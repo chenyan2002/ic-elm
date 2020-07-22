@@ -3,8 +3,20 @@ import candid from 'ic:idl/backend';
 import { IDL } from '@dfinity/agent';
 import { Elm } from './Main.elm';
 
-const arr = candid({IDL})._fields;
-const service = Object.assign(...arr.map(([key, val]) => ({[key]: val})));
+const service = Object.assign(...candid({IDL})._fields.map(([key, val]) => ({[key]: val})));
+
+function normalizeReturn(method, res) {
+  const func = service[method];
+  let result;
+  if (func.retTypes.length === 0) {
+    result = [];
+  } else if (func.retTypes.length === 1) {
+    result = [res];
+  } else {
+    result = res;
+  }
+  return result;
+}
 
 const app = Elm.Main.init({
   node: document.getElementById('app'),
@@ -12,16 +24,7 @@ const app = Elm.Main.init({
 
 app.ports.sendMessage.subscribe(([method, args]) => {
   backend[method](...args).then(res => {
-    const func = service[method];
-    var result;
-    if (func.retTypes.length === 0) {
-      result = [];
-    } else if (func.retTypes.length === 1) {
-      result = [res];
-    } else {
-      result = res;
-    }
-    //app.ports.messageReceiver.send([method, IDL.FuncClass.argsToString(func.retTypes, result)]);
+    const result = normalizeReturn(method, res);
     app.ports.messageReceiver.send([method, result]);
   });
 });

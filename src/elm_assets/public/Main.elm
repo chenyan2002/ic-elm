@@ -4,11 +4,13 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Encode as E
+import Json.Decode as D
 
 main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
-port sendMessage : (String, String) -> Cmd msg
+port sendMessage : (String, E.Value) -> Cmd msg
 port messageReceiver : ((String, String) -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
@@ -27,7 +29,7 @@ update msg model =
     Changed input -> ( { model | input = input }, Cmd.none)
     Send ->
         ( { model | output = "Waiting..." }
-        , sendMessage ("greet", model.input)
+        , sendMessage ("fib", E.int (Maybe.withDefault 0 (String.toInt model.input)))
         )
     Recv (method, message) ->
         ( { model | output = method ++ ": " ++ message }

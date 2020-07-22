@@ -59,10 +59,11 @@ function generateWebpackConfigForCanister(name, info) {
     // tutorial, uncomment the following lines:
     module: {
       rules: [
-        { test: /\.elm$/, exclude: [/elm-stuff/, /node_modules/],
+        { test: /\.elm$/,
+          exclude: [/elm-stuff/, /node_modules/],
           use: {
             loader: "elm-webpack-loader",
-            options: { optimize: true }
+            options: { optimize: false }
           }
         },
         { test: /\.css$/, use: ['style-loader','css-loader'] }

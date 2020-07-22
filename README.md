@@ -2,6 +2,12 @@
 
 A template for using Elm to develop frontend user interface for the Internet Computer.
 
+# Overview
+
+Elm --> JSON --> JS Candid Encoder --> IC canister --> JS Candid Decoder --> JSON --> Elm
+
+Currently Candid methods is untyped to Elm. The error only happens on the JS side in the runtime.
+
 # Usage 
 
 ```bash

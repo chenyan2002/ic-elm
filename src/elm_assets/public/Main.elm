@@ -10,8 +10,8 @@ import Json.Decode as D
 main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
-port sendMessage : (String, E.Value) -> Cmd msg
-port messageReceiver : ((String, String) -> msg) -> Sub msg
+port sendMessage : (String, List E.Value) -> Cmd msg
+port messageReceiver : ((String, List E.Value) -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
 subscriptions _ = messageReceiver Recv
@@ -21,7 +21,7 @@ type alias Model = { input : String, output : String }
 init : () -> (Model, Cmd msg)
 init _ = (Model "" "", Cmd.none)
 
-type Msg = Send | Recv (String, String) | Changed String
+type Msg = Send | Recv (String, List E.Value) | Changed String
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -29,10 +29,13 @@ update msg model =
     Changed input -> ( { model | input = input }, Cmd.none)
     Send ->
         ( { model | output = "Waiting..." }
-        , sendMessage ("fib", E.int (Maybe.withDefault 0 (String.toInt model.input)))
+        --, sendMessage ("getCaller", [])
+        , sendMessage ("greet", [E.string model.input])
+        --, sendMessage ("fib", [E.int (Maybe.withDefault 0 (String.toInt model.input))])
         )
     Recv (method, message) ->
-        ( { model | output = method ++ ": " ++ message }
+        let result = String.join ", " (List.map (\v -> E.encode 0 v) message) in
+        ( { model | output = method ++ ": " ++ result }
         , Cmd.none
         )
 

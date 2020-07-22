@@ -10,8 +10,8 @@ const app = Elm.Main.init({
   node: document.getElementById('app'),
 });
 
-app.ports.sendMessage.subscribe(([method, message]) => {
-  backend[method](message).then(res => {
+app.ports.sendMessage.subscribe(([method, args]) => {
+  backend[method](...args).then(res => {
     const func = service[method];
     var result;
     if (func.retTypes.length === 0) {
@@ -21,6 +21,7 @@ app.ports.sendMessage.subscribe(([method, message]) => {
     } else {
       result = res;
     }
-    app.ports.messageReceiver.send([method, IDL.FuncClass.argsToString(func.retTypes, result)]);
+    //app.ports.messageReceiver.send([method, IDL.FuncClass.argsToString(func.retTypes, result)]);
+    app.ports.messageReceiver.send([method, result]);
   });
 });

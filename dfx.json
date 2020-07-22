@@ -12,7 +12,6 @@
         "entrypoint": "src/elm_assets/public/index.js"
       },
       "source": [
-        "src/elm_assets/assets",
         "dist/elm_assets/"
       ],
       "type": "assets"

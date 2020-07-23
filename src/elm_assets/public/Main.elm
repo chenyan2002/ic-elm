@@ -11,7 +11,7 @@ main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 port sendMessage : (String, List E.Value) -> Cmd msg
-port messageReceiver : ((String, E.Value) -> msg) -> Sub msg
+port messageReceiver : ((String, String) -> msg) -> Sub msg
 port messageError : ((String, E.Value) -> msg) -> Sub msg
 
 greet : String -> Cmd msg
@@ -31,7 +31,7 @@ type alias Model = { input : String, output : String }
 init : () -> (Model, Cmd msg)
 init _ = (Model "" "", Cmd.none)
 
-type Msg = Send | Recv (String, E.Value) | Changed String | Error (String, E.Value)
+type Msg = Send | Recv (String, String) | Changed String | Error (String, E.Value)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -46,10 +46,10 @@ update msg model =
         , fib(Maybe.withDefault 0 (String.toInt model.input))
         )
     Recv (method, message) ->
-        --let result = String.join ", " (List.map (\v -> E.encode 0 v) message) in
+        --let result = E.encode 0 message in 
         --let result = String.fromInt (fibDecoder message) in
-        let result = E.encode 0 message in
-        ( { model | output = method ++ ": " ++ result }
+        --let result = greetDecoder message in
+        ( { model | output = method ++ ": " ++ message }
         , Cmd.none
         )
     Error (method, message) ->

@@ -88,7 +88,7 @@ const app = Elm.Main.init({
 
 app.ports.sendMessage.subscribe(([method, json_args]) => {
   const func = service[method];
-  const args = json_args.map((arg, i) => fromJson(func.argTypes[i], arg));
+  const args = func.argTypes.map((t, i) => fromJson(t, json_args[i]));
   backend[method](...args)
     .then(res => {
       const result = normalizeReturn(func.retTypes, res);

@@ -88,6 +88,7 @@ class CandidWalker extends IDL.Visitor {
         return res;
       }
     });
+    throw new Error('bad variant value');
   }
   visitRec(t, ty, v) {
     return walker(ty, this._toJSON, v);

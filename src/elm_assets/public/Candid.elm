@@ -18,6 +18,6 @@ fibDecoder = D.index 0 D.string
 callerDecoder = D.map2 Tuple.pair (D.index 0 D.string) (D.index 1 D.int)
 decode decoder msg =
     case D.decodeValue decoder msg of
-        --Ok (id, word) -> "(" ++ id ++ ", " ++ String.fromInt word ++ ")"
-        Ok str -> str
+        Ok (id, word) -> "(" ++ id ++ ", " ++ String.fromInt word ++ ")"
+        --Ok str -> str
         Err err -> D.errorToString err

@@ -18,68 +18,91 @@ function normalizeReturn(types, res) {
   return result;
 }
 
-class Candid2JSON extends IDL.Visitor {
-  visitType(t, v) {
+class CandidWalker extends IDL.Visitor {
+  constructor(toJSON) {
+    super();
+    if (typeof toJSON !== 'boolean') {
+      throw new Error('unknown flag');
+    }
+    this._toJSON = toJSON;
+  }
+  visitPrimitive(t, v) {
     return v;
   }
   visitNumber(t, v) {
-    return v.toFixed();
+    if (this._toJSON) {
+      return v.toFixed();
+    } else {
+      return new BigNumber(v);
+    }
   }
   visitFixedInt(t, v) {
-    if (t._bits <= 32) {
-      return v;
+    if (this._toJSON) {
+      if (t._bits <= 32) {
+        return v;
+      } else {
+        return v.toFixed();
+      }
     } else {
-      return v.toFixed();
+      return new BigNumber(v);
     }
   }
   visitFixedNat(t, v) {
-    if (t._bits <= 32) {
-      return v;
+    return this.visitFixedInt(t, v);
+  }
+  visitPrincipal(t, v) {
+    if (this._toJSON) {
+      return v.toText();
     } else {
-      return v.toFixed();
+      return canisterId.fromText(v);
     }
   }
-  visitPrincipal(t, v) {
-    return v.toText();
-  }
   visitService(t, v) {
-    return v.toText();
+    return this.visitPrincipal(t, v);
   }
   visitFunc(t, v) {
-    return [v[0].toText(), v[1]];
+    return [this.visitPrincipal(t, v[0]), v[1]];
+  }
+  visitVec(t, ty, v) {
+    return v.map(val => walker(ty, this._toJSON, val));
+  }
+  visitOpt(t, ty, v) {
+    if (v.length === 0) {
+      return v;
+    }
+    return [walker(ty, this._toJSON, v[0])];
+  }
+  visitRecord(t, fields, v) {
+    const res = {};
+    fields.forEach(([key, type], i) => {
+      res[key] = walker(type, this._toJSON, v[key]);
+    });
+    return res;
+  }
+  visitVariant(t, fields, v) {
+    const res = {};
+    const selected = Object.entries(v)[0];
+    fields.forEach(([key, type]) => {
+      if (key === selected[0]) {
+        res[key] = walker(type, this._toJSON, selected[1]);
+        return res;
+      }
+    });
   }
   visitRec(t, ty, v) {
-    return toJson(ty, v);
+    return walker(ty, this._toJSON, v);
   }
 }
 
-class JSON2Candid extends IDL.Visitor {
-  visitType(t, v) {
-    return v;
-  }
-  visitNumber(t, v) {
-    return new BigNumber(v);
-  }
-  visitPrincipal(t, v) {
-    return canisterId.fromText(v);
-  }
-  visitService(t, v) {
-    return canisterId.fromText(v);
-  }
-  visitFunc(t, v) {
-    return [canisterId.fromText(v[0]), v[1]];
-  }
-  visitRec(t, ty, v) {
-    return fromJson(ty, v);
-  }  
+function walker(t, toJSON, v) {
+  return t.accept(new CandidWalker(toJSON), v);
 }
 
-function toJson(t, v) {
-  return t.accept(new Candid2JSON(), v);
+function toJSON(t, v) {
+  return walker(t, true, v);
 }
-
-function fromJson(t, v) {
-  return t.accept(new JSON2Candid(), v);
+function fromJSON(t, v) {
+  return walker(t, false, v);
 }
 
 const app = Elm.Main.init({
@@ -88,11 +111,11 @@ const app = Elm.Main.init({
 
 app.ports.sendMessage.subscribe(([method, json_args]) => {
   const func = service[method];
-  const args = func.argTypes.map((t, i) => fromJson(t, json_args[i]));
+  const args = func.argTypes.map((t, i) => fromJSON(t, json_args[i]));
   backend[method](...args)
     .then(res => {
       const result = normalizeReturn(func.retTypes, res);
-      const json = func.retTypes.map((t, i) => toJson(t, result[i]));
+      const json = func.retTypes.map((t, i) => toJSON(t, result[i]));
       app.ports.messageReceiver.send([method, json]);
     })
     .catch(error => {

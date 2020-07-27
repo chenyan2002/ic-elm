@@ -26,13 +26,13 @@ update msg model =
     Changed input -> ( { model | input = input }, Cmd.none)
     Send ->
         ( { model | output = "Waiting..." }
-        --, greet(model.input)
-        --, getCaller()
-        , Candid.fib(model.input)
+        --, Candid.greet(model.input)
+        , Candid.getCaller()
+        --, Candid.fib(model.input)
         )
     Recv (method, message) ->
         --let result = E.encode 0 message in
-        let result = Candid.decode Candid.fibDecoder message in
+        let result = Candid.decode Candid.callerDecoder message in
         ( { model | output = method ++ ": " ++ result }
         , Cmd.none
         )

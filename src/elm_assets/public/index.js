@@ -17,6 +17,45 @@ function normalizeReturn(types, res) {
   return result;
 }
 
+class CandidJSON extends IDL.Visitor {
+  visitType(t, v) {
+    return v;
+  }
+  visitNumber(t, v) {
+    return v.toFixed();
+  }
+  visitFixedInt(t, v) {
+    if (t._bits <= 32) {
+      return v;
+    } else {
+      return v.toFixed();
+    }
+  }
+  visitFixedNat(t, v) {
+    if (t._bits <= 32) {
+      return v;
+    } else {
+      return v.toFixed();
+    }
+  }  
+  visitPrincipal(t, v) {
+    return v.toText();
+  }
+  visitService(t, v) {
+    return v.toText();
+  }
+  visitFunc(t, v) {
+    return [v[0].toText(), v[1]];
+  }
+  visitRec(t, ty, v) {
+    return toJson(ty, v);
+  }
+}
+
+function toJson(t, v) {
+  return t.accept(new CandidJSON(), v);
+}
+
 const app = Elm.Main.init({
   node: document.getElementById('app'),
 });
@@ -26,8 +65,8 @@ app.ports.sendMessage.subscribe(([method, args]) => {
     .then(res => {
       const func = service[method];
       const result = normalizeReturn(func.retTypes, res);
-      const text = IDL.FuncClass.argsToString(func.retTypes, result);
-      app.ports.messageReceiver.send([method, text]);
+      const json = func.retTypes.map((t, i) => toJson(t, result[i]));
+      app.ports.messageReceiver.send([method, json]);
     })
     .catch(error => {
       app.ports.messageError.send([method, error.message]);

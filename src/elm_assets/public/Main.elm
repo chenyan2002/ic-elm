@@ -11,14 +11,23 @@ main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 port sendMessage : (String, List E.Value) -> Cmd msg
-port messageReceiver : ((String, List E.Value) -> msg) -> Sub msg
+port messageReceiver : ((String, E.Value) -> msg) -> Sub msg
 port messageError : ((String, E.Value) -> msg) -> Sub msg
 
 greet : String -> Cmd msg
 greet name = sendMessage("greet", [E.string name])
-fib : Int -> Cmd msg
-fib n = sendMessage("fib", [E.int n])
+fib : String -> Cmd msg
+fib n = sendMessage("fib", [E.string n])
 getCaller () = sendMessage("getCaller", [])
+
+greetDecoder = D.index 0 D.string
+fibDecoder = D.index 0 D.string
+callerDecoder = D.map2 Tuple.pair (D.index 0 D.string) (D.index 1 D.int)
+decode decoder msg =
+    case D.decodeValue decoder msg of
+        --Ok (id, word) -> "(" ++ id ++ ", " ++ String.fromInt word ++ ")"
+        Ok str -> str
+        Err err -> D.errorToString err
 
 subscriptions : Model -> Sub Msg
 subscriptions _ = Sub.batch [messageReceiver Recv, messageError Error]
@@ -28,7 +37,7 @@ type alias Model = { input : String, output : String }
 init : () -> (Model, Cmd msg)
 init _ = (Model "" "", Cmd.none)
 
-type Msg = Send | Recv (String, List E.Value) | Changed String | Error (String, E.Value)
+type Msg = Send | Recv (String, E.Value) | Changed String | Error (String, E.Value)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -37,11 +46,12 @@ update msg model =
     Send ->
         ( { model | output = "Waiting..." }
         --, greet(model.input)
-        --, fib(Maybe.withDefault 0 (String.toInt model.input))
-        , getCaller()
+        --, getCaller()
+        , fib(model.input)
         )
     Recv (method, message) ->
-        let result = List.map (E.encode 0) message |> String.join ", " in
+        --let result = E.encode 0 message in
+        let result = decode fibDecoder message in
         ( { model | output = method ++ ": " ++ result }
         , Cmd.none
         )

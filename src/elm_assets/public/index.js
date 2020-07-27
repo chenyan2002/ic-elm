@@ -1,6 +1,7 @@
+import BigNumber from 'bignumber.js';
 import backend from 'ic:canisters/backend';
 import candid from 'ic:idl/backend';
-import { IDL } from '@dfinity/agent';
+import { IDL, CanisterId } from '@dfinity/agent';
 import { Elm } from './Main.elm';
 
 const service = Object.assign(...candid({IDL})._fields.map(([key, val]) => ({[key]: val})));
@@ -17,7 +18,7 @@ function normalizeReturn(types, res) {
   return result;
 }
 
-class CandidJSON extends IDL.Visitor {
+class Candid2JSON extends IDL.Visitor {
   visitType(t, v) {
     return v;
   }
@@ -37,7 +38,7 @@ class CandidJSON extends IDL.Visitor {
     } else {
       return v.toFixed();
     }
-  }  
+  }
   visitPrincipal(t, v) {
     return v.toText();
   }
@@ -52,18 +53,44 @@ class CandidJSON extends IDL.Visitor {
   }
 }
 
+class JSON2Candid extends IDL.Visitor {
+  visitType(t, v) {
+    return v;
+  }
+  visitNumber(t, v) {
+    return new BigNumber(v);
+  }
+  visitPrincipal(t, v) {
+    return canisterId.fromText(v);
+  }
+  visitService(t, v) {
+    return canisterId.fromText(v);
+  }
+  visitFunc(t, v) {
+    return [canisterId.fromText(v[0]), v[1]];
+  }
+  visitRec(t, ty, v) {
+    return fromJson(ty, v);
+  }  
+}
+
 function toJson(t, v) {
-  return t.accept(new CandidJSON(), v);
+  return t.accept(new Candid2JSON(), v);
+}
+
+function fromJson(t, v) {
+  return t.accept(new JSON2Candid(), v);
 }
 
 const app = Elm.Main.init({
   node: document.getElementById('app'),
 });
 
-app.ports.sendMessage.subscribe(([method, args]) => {
+app.ports.sendMessage.subscribe(([method, json_args]) => {
+  const func = service[method];
+  const args = json_args.map((arg, i) => fromJson(func.argTypes[i], arg));
   backend[method](...args)
     .then(res => {
-      const func = service[method];
       const result = normalizeReturn(func.retTypes, res);
       const json = func.retTypes.map((t, i) => toJson(t, result[i]));
       app.ports.messageReceiver.send([method, json]);

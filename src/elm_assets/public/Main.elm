@@ -2,11 +2,11 @@ module Main exposing (..)
 
 import Browser
 import Candid
-import BigInt
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Encode as E
+import Json.Decode as D
 
 main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
@@ -27,13 +27,13 @@ update msg model =
     Changed input -> ( { model | input = input }, Cmd.none)
     Send ->
         ( { model | output = "Waiting..." }
-        --, Candid.greet(model.input)
-        --, Candid.getCaller()
-        , Candid.fib(BigInt.fromInt <| Maybe.withDefault -1 <| String.toInt <| model.input)
+        , Candid.greet(model.input)
         )
     Recv (method, message) ->
-        --let result = E.encode 0 message in
-        let result = Candid.decode Candid.fibDecoder message in
+        let result = case D.decodeValue Candid.greetDecoder message of
+                Ok str -> str
+                Err err -> D.errorToString err
+        in
         ( { model | output = method ++ ": " ++ result }
         , Cmd.none
         )

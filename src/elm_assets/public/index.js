@@ -1,10 +1,9 @@
 import backend from 'ic:canisters/backend';
-import candid from 'ic:idl/backend';
-import { IDL } from '@dfinity/agent';
-import { Elm } from './Main.elm';
+import { Actor } from '@dfinity/agent';
 import * as Util from './candidUtils';
+import { Elm } from './Main.elm';
 
-const service = Object.assign(...candid({IDL})._fields.map(([key, val]) => ({[key]: val})));
+const service = Object.assign(...Actor.interfaceOf(backend)._fields.map(([key, val]) => ({[key]: val})));
 
 const app = Elm.Main.init({
   node: document.getElementById('app'),

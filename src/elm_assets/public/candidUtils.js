@@ -13,7 +13,6 @@ export function normalizeReturn(types, res) {
   return result;
 }
 
-
 class CandidWalker extends IDL.Visitor {
   constructor(toJSON) {
     super();

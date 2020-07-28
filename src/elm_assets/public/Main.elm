@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Candid
+import BigInt
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -27,12 +28,12 @@ update msg model =
     Send ->
         ( { model | output = "Waiting..." }
         --, Candid.greet(model.input)
-        , Candid.getCaller()
-        --, Candid.fib(model.input)
+        --, Candid.getCaller()
+        , Candid.fib(BigInt.fromInt <| Maybe.withDefault -1 <| String.toInt <| model.input)
         )
     Recv (method, message) ->
         --let result = E.encode 0 message in
-        let result = Candid.decode Candid.callerDecoder message in
+        let result = Candid.decode Candid.fibDecoder message in
         ( { model | output = method ++ ": " ++ result }
         , Cmd.none
         )

@@ -37,14 +37,10 @@ class CandidWalker extends IDL.Visitor {
     }
   }
   visitFixedInt(t, v) {
-    if (this._toJSON) {
-      if (t._bits <= 32) {
+    if (this._toJSON && t._bits <= 32) {
         return v;
-      } else {
-        return v.toFixed();
-      }
     } else {
-      return new BigNumber(v);
+      return this.visitNumber(t, v);
     }
   }
   visitFixedNat(t, v) {

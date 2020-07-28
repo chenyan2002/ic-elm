@@ -1,6 +1,7 @@
-port module Main exposing (..)
+module Main exposing (..)
 
 import Browser
+import Candid
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -10,18 +11,15 @@ import Json.Decode as D
 main =
   Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
-port sendMessage : (String, List E.Value) -> Cmd msg
-port messageReceiver : ((String, List E.Value) -> msg) -> Sub msg
-
 subscriptions : Model -> Sub Msg
-subscriptions _ = messageReceiver Recv
+subscriptions _ = Sub.batch [Candid.messageReceiver Recv, Candid.messageError Error]
 
 type alias Model = { input : String, output : String }
 
 init : () -> (Model, Cmd msg)
 init _ = (Model "" "", Cmd.none)
 
-type Msg = Send | Recv (String, List E.Value) | Changed String
+type Msg = Send | Recv (String, E.Value) | Changed String | Error (String, E.Value)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -29,13 +27,19 @@ update msg model =
     Changed input -> ( { model | input = input }, Cmd.none)
     Send ->
         ( { model | output = "Waiting..." }
-        --, sendMessage ("getCaller", [])
-        --, sendMessage ("fib", [E.int (Maybe.withDefault 0 (String.toInt model.input))])
-        , sendMessage ("greet", [E.string model.input])
+        , Candid.greet(model.input)
         )
     Recv (method, message) ->
-        let result = String.join ", " (List.map (\v -> E.encode 0 v) message) in
+        let result = case D.decodeValue Candid.greetDecoder message of
+                Ok str -> str
+                Err err -> D.errorToString err
+        in
         ( { model | output = method ++ ": " ++ result }
+        , Cmd.none
+        )
+    Error (method, message) ->
+        let error = E.encode 0 message in
+        ( { model | output = method ++ ": " ++ error }
         , Cmd.none
         )
 

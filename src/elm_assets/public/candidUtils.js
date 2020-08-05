@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-import { IDL, CanisterId } from '@dfinity/agent';
+import { IDL, Principal } from '@dfinity/agent';
 
 export function normalizeReturn(types, res) {
   let result;
@@ -45,7 +45,7 @@ class CandidWalker extends IDL.Visitor {
     if (this._toJSON) {
       return v.toText();
     } else {
-      return canisterId.fromText(v);
+      return Principal.fromText(v);
     }
   }
   visitService(t, v) {
